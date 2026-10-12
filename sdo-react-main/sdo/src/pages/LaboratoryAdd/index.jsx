@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { IoIosClose } from "react-icons/io";
 import { IoFolderOpenOutline, IoCloudUploadOutline } from "react-icons/io5";
+import LaboratoryAddMobile from "./LaboratoryAddMobile";
 
 const API_BASE_URL = `${process.env.REACT_APP_API_URL}/api/teachers`;
 
@@ -321,6 +322,13 @@ const Notification = styled.div`
   opacity: ${({ $visible }) => ($visible ? 1 : 0)};
   transition: opacity 0.5s ease, transform 0.5s ease;
   z-index: 1000;
+
+  @media (max-width: 480px) {
+    left: 16px;
+    right: 16px;
+    bottom: 100px;
+    text-align: center;
+  }
 `;
 
 const TwoColumnRow = styled.div`
@@ -332,6 +340,19 @@ const TwoColumnRow = styled.div`
   }
 `;
 
+const DesktopOnly = styled.div`
+  @media (max-width: 480px) {
+    display: none;
+  }
+`;
+
+const MobileOnly = styled.div`
+  display: none;
+  @media (max-width: 480px) {
+    display: block;
+  }
+`;
+
 const LaboratoryAdd = () => {
   const navigate = useNavigate();
 
@@ -340,7 +361,9 @@ const LaboratoryAdd = () => {
   const [selectedGroup, setSelectedGroup] = useState("");
   const [groups, setGroups] = useState([]);
   const [tests, setTests] = useState([]);
-  const [newTest, setNewTest] = useState({ inp: "", out: "" });
+  const [newTest, setNewTest] = useState({ name: "", inp: "", format: "", out: "" });
+  const [teacherFormula, setTeacherFormula] = useState("");
+  const [formulaDraft, setFormulaDraft] = useState("");
   const [bulkTestsText, setBulkTestsText] = useState("");
   const fileInputRef = useRef(null);
 
@@ -382,8 +405,29 @@ const LaboratoryAdd = () => {
       setIsSuccess(false);
       return;
     }
-    setTests([...tests, { id: Date.now(), inp: newTest.inp, out: newTest.out }]);
-    setNewTest({ inp: "", out: "" });
+    setTests([...tests, { ...newTest, id: Date.now() }]);
+    setNewTest({ name: "", inp: "", format: "", out: "" });
+  };
+
+  const handleSaveTitle = () => {
+    setResponseMessage("Название сохранено");
+    setIsSuccess(true);
+  };
+
+  const handleAddFormula = () => {
+    if (!formulaDraft.trim()) {
+      setResponseMessage("Введите формулу!");
+      setIsSuccess(false);
+      return;
+    }
+    setTeacherFormula(formulaDraft.trim());
+    setResponseMessage("Формула добавлена");
+    setIsSuccess(true);
+  };
+
+  const handleSaveRestriction = () => {
+    setResponseMessage("Ограничение сохранено");
+    setIsSuccess(true);
   };
 
   const handleRemoveTest = (index) => {
@@ -455,7 +499,7 @@ const LaboratoryAdd = () => {
         id: 0,
         name: labTitle,
         description: labDescription || "",
-        teacher_formula: "",
+        teacher_formula: teacherFormula,
         input_variables: "",
         subject_id: 1,
         group_id: parseInt(selectedGroup),
@@ -481,6 +525,36 @@ const LaboratoryAdd = () => {
 
   return (
     <>
+      <MobileOnly>
+        <LaboratoryAddMobile
+          labTitle={labTitle}
+          setLabTitle={setLabTitle}
+          onSaveTitle={handleSaveTitle}
+          labDescription={labDescription}
+          setLabDescription={setLabDescription}
+          selectedGroup={selectedGroup}
+          setSelectedGroup={setSelectedGroup}
+          groups={groups}
+          tests={tests}
+          onRemoveTest={handleRemoveTest}
+          newTest={newTest}
+          setNewTest={setNewTest}
+          onAddTest={handleAddTest}
+          formulaDraft={formulaDraft}
+          setFormulaDraft={setFormulaDraft}
+          onAddFormula={handleAddFormula}
+          maxVariables={maxVariables}
+          setMaxVariables={setMaxVariables}
+          speedLimit={speedLimit}
+          setSpeedLimit={setSpeedLimit}
+          attemptsCount={attemptsCount}
+          setAttemptsCount={setAttemptsCount}
+          onSaveRestriction={handleSaveRestriction}
+          onCancel={() => navigate(-1)}
+          onSubmit={handleSubmit}
+        />
+      </MobileOnly>
+      <DesktopOnly>
       <Section onSubmit={handleSubmit}>
         <UlList>
           {/* ЭТАЖ 1: Название */}
@@ -672,6 +746,7 @@ const LaboratoryAdd = () => {
           </div>
         </UlList>
       </Section>
+      </DesktopOnly>
       {showNotification && (
         <Notification $isSuccess={isSuccess} $visible={showNotification}>
           {responseMessage}
