@@ -87,6 +87,10 @@ const UlList = styled.ul`
   flex-wrap: wrap;
   justify-content: center;
   gap: 25px;
+  padding: 0;
+  margin: 40px auto;
+  width: 100%;
+  max-width: 1248px;
 
   .editing__block-Two {
     padding: 0px 30px 30px 20px;
@@ -169,11 +173,13 @@ const List = styled.li`
   justify-content: center;
   gap: 20px;
   list-style-type: none;
+  padding: 0 16px;
+  box-sizing: border-box;
 `;
 
 const TitleInput = styled.input`
-  width: calc(100% - 40px);
-  max-width: 1175px;
+  width: 100%;
+  max-width: 100%;
   height: 80px;
   font-size: 18px;
   padding: 0 20px;
@@ -182,21 +188,24 @@ const TitleInput = styled.input`
   outline: none;
   font-family: "Montserrat";
   background-color: #ffffff;
+  box-sizing: border-box;
 `;
 
 const TestsIOBlock = styled.div`
   width: 1248px;
   background-color: #d5def6;
   border-radius: 10px;
-  padding: 20px;
+  height: 450px;
   .tests-input-title {
     font-size: 19px;
     font-family: "Montserrat";
     font-weight: 500;
     margin-bottom: 15px;
+    margin-left: 20px;
   }
   .tests-input {
     margin-bottom: 15px;
+    margin-left: 20px;
   }
   .hint {
     font-size: 14px;
@@ -218,7 +227,7 @@ const TestsIOBlock = styled.div`
     }
   }
   .textarea {
-    width: 100%;
+    width: 96.5%;
     height: 150px;
     border-radius: 7px;
     border: none;
@@ -231,7 +240,7 @@ const TestsIOBlock = styled.div`
 `;
 
 const RestrictionsBlock = styled.div`
-  width: 1248px;
+  width: 1210px;
   background-color: #e2edd0;
   border-radius: 10px;
   padding: 20px;
@@ -289,6 +298,7 @@ const ButtonAdd = styled.button`
   background: #fff;
   height: 42px;
   cursor: pointer;
+  margin-left: 20px;
   &:hover {
     background: #c8d5f6;
     color: #fff;
@@ -304,8 +314,20 @@ const FormSelect = styled.select`
   outline: none;
   font-size: 16px;
   font-family: "Montserrat";
-  padding: 0 10px;
+  padding: 0 35px 0 10px;              /* ← padding справа под стрелку */
   width: 100%;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;   /* ← сдвинули на 12px вместо 10px */
+  background-size: 14px;
+  &:focus {
+    outline: none;
+  }
 `;
 
 const Notification = styled.div`
@@ -337,11 +359,11 @@ const PrepodRedLab = () => {
   const navigate = useNavigate();
 
   const [labTitle, setLabTitle] = useState("");
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [editingTitle, setEditingTitle] = useState("");
   const [labDescription, setLabDescription] = useState("");
   const [selectedGroup, setSelectedGroup] = useState("");
   const [groups, setGroups] = useState([]);
+  const [subjectId, setSubjectId] = useState("");
+  const [subjects, setSubjects] = useState([]);
   const [tests, setTests] = useState([]);
   const [newTest, setNewTest] = useState({ inp: "", out: "" });
   const [bulkTestsText, setBulkTestsText] = useState("");
@@ -374,7 +396,18 @@ const PrepodRedLab = () => {
         console.error("Ошибка загрузки групп:", err);
       }
     };
+
+    const fetchSubjects = async () => {
+      try {
+        const res = await api.get("/subjects");
+        setSubjects(res.data);
+      } catch (err) {
+        console.error("Ошибка загрузки предметов:", err);
+      }
+    };
+
     fetchGroups();
+    fetchSubjects();
   }, []);
 
   useEffect(() => {
@@ -383,10 +416,10 @@ const PrepodRedLab = () => {
         const res = await api.get(`/labs/${id}`);
         const lab = res.data;
         setLabTitle(lab.name || "");
-        setEditingTitle(lab.name || "");
         setLabDescription(lab.description || "");
         setTests(lab.test_cases || []);
         setSelectedGroup(lab.group_id || "");
+        setSubjectId(lab.subject_id || "");
         setLoading(false);
       } catch (err) {
         console.error(err);
@@ -411,16 +444,6 @@ const PrepodRedLab = () => {
       }, 3000);
     }
   }, [responseMessage]);
-
-  const handleSaveTitle = () => {
-    if (editingTitle.trim()) {
-      setLabTitle(editingTitle.trim());
-      setIsEditingTitle(false);
-    } else {
-      setResponseMessage("Название не может быть пустым!");
-      setIsSuccess(false);
-    }
-  };
 
   const handleAddTest = () => {
     if (!newTest.inp.trim() && !newTest.out.trim()) {
@@ -489,6 +512,11 @@ const PrepodRedLab = () => {
       setIsSuccess(false);
       return;
     }
+    if (!subjectId) {
+      setResponseMessage("Выберите предмет!");
+      setIsSuccess(false);
+      return;
+    }
     if (tests.length === 0) {
       setResponseMessage("Добавьте хотя бы один тест!");
       setIsSuccess(false);
@@ -502,7 +530,7 @@ const PrepodRedLab = () => {
         description: labDescription || "",
         teacher_formula: "",
         input_variables: "",
-        subject_id: 1,
+        subject_id: Number(subjectId),
         group_id: parseInt(selectedGroup),
         test_cases: tests.map((t, idx) => ({
           id: typeof t.id === "number" ? t.id : idx + 1,
@@ -516,7 +544,8 @@ const PrepodRedLab = () => {
       await api.put(`/labs/${id}`, payload);
       setResponseMessage("Лабораторная работа обновлена!");
       setIsSuccess(true);
-      setTimeout(() => navigate("/teacher/labs"), 1500);
+      localStorage.setItem("lastEditedLabId", id);
+      setTimeout(() => navigate("/Laboratory"), 1500);
     } catch (err) {
       console.error(err);
       setResponseMessage(err.response?.data?.error || "Ошибка обновления");
@@ -530,44 +559,15 @@ const PrepodRedLab = () => {
     <>
       <Section onSubmit={(e) => e.preventDefault()}>
         <UlList>
-          {/* ЭТАЖ 1: Название */}
-          <List $Block style={{ width: "1248px", minHeight: "120px", padding: "20px" }}>
-            {!isEditingTitle ? (
-              <div style={{ width: "100%", textAlign: "center" }}>
-                <TitleBlock style={{ fontSize: "24px", marginBottom: "15px" }}>
-                  Текущее название: {labTitle}
-                </TitleBlock>
-                <ButtonAdd onClick={() => setIsEditingTitle(true)} style={{ width: "200px" }}>
-                  Изменить название
-                </ButtonAdd>
-              </div>
-            ) : (
-              <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "15px", alignItems: "center" }}>
-                <TitleInput
-                  type="text"
-                  value={editingTitle}
-                  onChange={(e) => setEditingTitle(e.target.value)}
-                  autoFocus
-                />
-                <div style={{ display: "flex", gap: "15px" }}>
-                  <ButtonAdd onClick={handleSaveTitle} style={{ background: "#4CAF50", color: "white" }}>
-                    Сохранить
-                  </ButtonAdd>
-                  <ButtonAdd
-                    onClick={() => {
-                      setEditingTitle(labTitle);
-                      setIsEditingTitle(false);
-                    }}
-                    style={{ background: "#f44336", color: "white" }}
-                  >
-                    Отмена
-                  </ButtonAdd>
-                </div>
-              </div>
-            )}
+          <List $Block style={{ width: "1248px", height: "120px" }}>
+            <TitleInput
+              type="text"
+              placeholder="Введите название лабораторной работы"
+              value={labTitle}
+              onChange={(e) => setLabTitle(e.target.value)}
+            />
           </List>
 
-          {/* ЭТАЖ 2: Описание + Группа */}
           <TwoColumnRow>
             <List>
               <div className="editing__block-Two">
@@ -586,22 +586,37 @@ const PrepodRedLab = () => {
               </div>
             </List>
             <List $Back>
-              <div className="editing__block-Two">
-                <TitleBlock>Выбор группы</TitleBlock>
-                <p className="editing__block-text">Выберите группу</p>
-                <FormSelect value={selectedGroup} onChange={(e) => setSelectedGroup(e.target.value)}>
-                  <option value="">Группа</option>
-                  {groups.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.name}
-                    </option>
-                  ))}
-                </FormSelect>
+              <div className="editing__block-Two" style={{ width: "100%" }}>
+                <div style={{ display: "flex", gap: "16px", width: "100%" }}>
+                  <div style={{ flex: 1 }}>
+                    <TitleBlock>Группа</TitleBlock>
+                    <p className="editing__block-text">Выберите группу</p>
+                    <FormSelect value={selectedGroup} onChange={(e) => setSelectedGroup(e.target.value)}>
+                      <option value="">Группа</option>
+                      {groups.map((g) => (
+                        <option key={g.id} value={g.id}>
+                          {g.name}
+                        </option>
+                      ))}
+                    </FormSelect>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <TitleBlock>Предмет</TitleBlock>
+                    <p className="editing__block-text">Выберите предмет</p>
+                    <FormSelect value={subjectId} onChange={(e) => setSubjectId(e.target.value)}>
+                      <option value="">Предмет</option>
+                      {subjects.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
+                    </FormSelect>
+                  </div>
+                </div>
               </div>
             </List>
           </TwoColumnRow>
 
-          {/* ЭТАЖ 3: Тесты */}
           <BigBlock $BigFon $BigHeight $GapForm>
             <div className="block__one">
               <TitleBlock $Padding>Список тестов:</TitleBlock>
@@ -658,7 +673,6 @@ const PrepodRedLab = () => {
             </div>
           </BigBlock>
 
-          {/* ЭТАЖ 4: Импорт тестов */}
           <TestsIOBlock>
             <p className="tests-input-title">Форма для ввода или загрузки тестов</p>
             <div className="tests-input">
@@ -686,7 +700,6 @@ const PrepodRedLab = () => {
             <ButtonAdd onClick={importTestsFromText}>Импортировать тесты</ButtonAdd>
           </TestsIOBlock>
 
-          {/* ЭТАЖ 5: Ограничения */}
           <RestrictionsBlock>
             <RestrictionRoom>
               <p className="room-title">Количество переменных</p>
@@ -740,7 +753,6 @@ const PrepodRedLab = () => {
             </RestrictionRoom>
           </RestrictionsBlock>
 
-          {/* ЭТАЖ 6: Кнопка */}
           <div className="block__button">
             <button className="block__end" type="button" onClick={handleSave}>
               <span className="block__end-link">Завершить редактирование и сохранить</span>

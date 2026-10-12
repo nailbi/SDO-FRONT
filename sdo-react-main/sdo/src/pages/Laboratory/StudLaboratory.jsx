@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import "../../styles/style.css";
 import styled from "styled-components";
 import { FaSearch } from "react-icons/fa";
@@ -22,12 +22,13 @@ const SectionLab = styled.div`
     justify-content: center;
     width: 100%;
     max-width: 1270px;
-    padding: 0 20px;
+    padding: 0;
     box-sizing: border-box;
   }
 
   .section__lab-btn {
-    width: 280px;
+    flex: 1;
+    min-width: 0;
     padding: 10px;
     font-size: 16px;
     text-align: center;
@@ -35,7 +36,7 @@ const SectionLab = styled.div`
     font-family: Montserrat;
     line-height: 27px;
     text-decoration: none;
-    background: #F0F0F0;
+    background: #f0f0f0;
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -43,16 +44,23 @@ const SectionLab = styled.div`
     white-space: nowrap;
     transition: all 0.3s ease;
     overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .section__lab-btn:hover {
-    background: #D9D9D9;
+    background: #d9d9d9;
     transition: 0.3s;
   }
 
   .section__lab-btn.active {
-    background: #BECBEE;
+    background: #becbee;
     color: #fff;
+  }
+
+  @media (max-width: 1300px) {
+    .section__lab-blockSearch {
+      padding: 0 20px;
+    }
   }
 
   @media (max-width: 768px) {
@@ -65,10 +73,6 @@ const SectionLab = styled.div`
     }
 
     .section__lab-btn {
-      width: auto;
-      flex: 1;
-      min-width: 0;
-      max-width: 280px;
       font-size: 14px;
       padding: 8px;
     }
@@ -107,6 +111,59 @@ const SectionLab = styled.div`
   }
 `;
 
+const SubjectSelectWrapper = styled.div`
+  width: 100%;
+  max-width: 1270px;
+  padding: 0;
+  box-sizing: border-box;
+
+  @media (max-width: 1300px) {
+    padding: 0 20px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 0 16px;
+  }
+
+  @media (max-width: 570px) {
+    padding: 0 12px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0 10px;
+  }
+`;
+
+const SubjectSelect = styled.select`
+  width: 100%;
+  height: 47px;
+  font-family: "Montserrat";
+  background-color: #f0f0f0;
+  border: none;
+  border-radius: 8px;
+  padding: 0 40px 0 15px;
+  font-size: 16px;
+  color: #000;
+  cursor: pointer;
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  background-size: 16px;
+
+  &:focus {
+    outline: none;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+    height: 42px;
+  }
+`;
+
 const NameLab = styled.p`
   color: #000;
   font-family: "Montserrat";
@@ -133,12 +190,13 @@ const ListLab = styled.ul`
   width: 100%;
   max-width: 1270px;
   list-style: none;
-  padding: 0 20px;
+  padding: 0;
   margin: 0;
   box-sizing: border-box;
 
   @media (max-width: 1300px) {
     max-width: 100%;
+    padding: 0 20px;
   }
 
   @media (max-width: 768px) {
@@ -146,8 +204,12 @@ const ListLab = styled.ul`
     gap: 12px;
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: 570px) {
     padding: 0 12px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0 10px;
     gap: 10px;
   }
 `;
@@ -157,7 +219,11 @@ const LabItem = styled.li`
   padding: 40px;
   font-size: 18px;
   font-family: Montserrat;
-  background: ${(props) => (props.isCompleted ? "#E6F4CF" : "#f0f0f0")};
+  background: ${(props) => {
+    if (props.$status === "success") return "#E6F4CF";     
+    if (props.$status === "failed") return "#FFC7C7";      
+    return "#f0f0f0";                                       
+  }};
   border-radius: 7px;
   display: flex;
   justify-content: space-between;
@@ -189,7 +255,7 @@ const LabItem = styled.li`
 const TaskButton = styled.button`
   width: 161px;
   height: 39px;
-  background-color: #BECBEE;
+  background-color: #becbee;
   font-size: 14px;
   font-family: "Montserrat";
   color: #fff;
@@ -202,7 +268,7 @@ const TaskButton = styled.button`
   white-space: nowrap;
 
   &:hover {
-    background-color: #D9D9D9;
+    background-color: #d9d9d9;
   }
 
   @media (max-width: 768px) {
@@ -268,19 +334,16 @@ const SearchIcon = styled(FaSearch)`
 const StudLaboratory = () => {
   const [labItems, setLabItems] = useState({ isLoading: true, data: [] });
   const [searchValue, setSearchValue] = useState("");
-  const [filter, setFilter] = useState("all"); // all, completed, notCompleted
+  const [filter, setFilter] = useState("all");
+  const [selectedSubject, setSelectedSubject] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchLabs = async () => {
       try {
         const response = await getTasks();
-        const formattedData = response.data.map(([id, title, isCompleted]) => ({
-          id,
-          title,
-          isCompleted,
-        }));
-        setLabItems({ isLoading: false, data: formattedData });
+        // Новый формат: [{id, name, completed, subject_id, subject_name}, ...]
+        setLabItems({ isLoading: false, data: response.data });
       } catch (error) {
         console.error("Failed to fetch labs:", error);
         setLabItems({ isLoading: false, data: [] });
@@ -289,6 +352,19 @@ const StudLaboratory = () => {
 
     fetchLabs();
   }, []);
+
+  const uniqueSubjects = useMemo(() => {
+    const map = new Map();
+    labItems.data.forEach((lab) => {
+      if (lab.subject_id && !map.has(lab.subject_id)) {
+        map.set(lab.subject_id, {
+          id: lab.subject_id,
+          name: lab.subject_name,
+        });
+      }
+    });
+    return Array.from(map.values());
+  }, [labItems.data]);
 
   const handleSearchChange = (event) => {
     setSearchValue(event.target.value);
@@ -303,11 +379,19 @@ const StudLaboratory = () => {
   };
 
   const filteredLabs = labItems.data
-    .filter((lab) => lab.title.toLowerCase().includes(searchValue.toLowerCase()))
+    .filter((lab) =>
+      (lab.title || lab.name || "")
+        .toLowerCase()
+        .includes(searchValue.toLowerCase()),
+    )
     .filter((lab) => {
-      if (filter === "completed") return lab.isCompleted;
-      if (filter === "notCompleted") return !lab.isCompleted;
+      if (filter === "completed") return lab.completed;
+      if (filter === "notCompleted") return !lab.completed;
       return true;
+    })
+    .filter((lab) => {
+      if (!selectedSubject) return true;
+      return Number(lab.subject_id) === Number(selectedSubject);
     });
 
   return (
@@ -342,6 +426,20 @@ const StudLaboratory = () => {
         </button>
       </div>
 
+      <SubjectSelectWrapper>
+        <SubjectSelect
+          value={selectedSubject}
+          onChange={(e) => setSelectedSubject(e.target.value)}
+        >
+          <option value="">Все предметы</option>
+          {uniqueSubjects.map((subject) => (
+            <option key={subject.id} value={subject.id}>
+              {subject.name}
+            </option>
+          ))}
+        </SubjectSelect>
+      </SubjectSelectWrapper>
+
       <ListLab>
         {labItems.isLoading ? (
           <p>Загрузка...</p>
@@ -349,9 +447,11 @@ const StudLaboratory = () => {
           <p>Лабораторные не найдены</p>
         ) : (
           filteredLabs.map((lab) => (
-            <LabItem key={lab.id} isCompleted={lab.isCompleted}>
-              <NameLab>{lab.title}</NameLab>
-              <TaskButton onClick={() => handleLabClick(lab.id)}>Перейти</TaskButton>
+            <LabItem key={lab.id} $status={lab.status || "not_started"}>
+              <NameLab>{lab.name}</NameLab>
+              <TaskButton onClick={() => handleLabClick(lab.id)}>
+                Перейти
+              </TaskButton>
             </LabItem>
           ))
         )}

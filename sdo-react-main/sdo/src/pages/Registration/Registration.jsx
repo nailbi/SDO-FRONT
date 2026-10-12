@@ -49,6 +49,9 @@ const Form = styled.form`
     font-family: "Montserrat";
     outline: none;
     box-sizing: border-box;
+    border: 1px solid #424451;
+    border-radius: 6px;
+    padding: 0 8px;
   }
 
   .section__login-formSelect {
@@ -59,9 +62,9 @@ const Form = styled.form`
     color: #252525;
     font-family: "Montserrat" !important;
     outline: none;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding: 0 10px;
+    border: 1px solid #424451;
+    border-radius: 6px;
+    padding: 0 8px;
     background-color: #fff;
     box-sizing: border-box;
   }
@@ -85,10 +88,15 @@ const Form = styled.form`
 const CheckboxContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   font-family: "Montserrat";
   font-size: 14px;
   color: #252525;
+
+  input{
+    width: 18px;
+    height: 18px;
+  }
 `;
 
 const CheckboxLabel = styled.label`

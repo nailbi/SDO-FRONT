@@ -138,12 +138,20 @@ const SectionLab = styled.div`
     height: 47px;
     border: none;
     background-color: #f0f0f0;
-    padding: 0 10px;
+    padding: 0 35px 0 10px;
     font-size: 16px;
     color: #000;
     text-align: center;
     border-radius: 8px;
     box-sizing: border-box;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 14px;
+
     &:focus {
       outline: none;
     }
@@ -434,9 +442,10 @@ const SearchIcon = styled(FaSearch)`
 `;
 const SearchContainer = styled.div`
   display: flex;
-  margin: 40px 0px 0px 40px;
-  justify-content: space-between;
-  width: 1236px;
+  align-items: center;
+  margin: 40px auto 0;
+  width: 100%;
+  max-width: 1236px;
   gap: 10px;
   flex-wrap: wrap;
   box-sizing: border-box;
@@ -444,19 +453,20 @@ const SearchContainer = styled.div`
   @media (max-width: 1300px) {
     width: 100%;
     max-width: 1236px;
-    margin: 40px 20px 0px 20px;
+    margin: 40px auto 0;
+    padding: 0 20px;
   }
 
   @media (max-width: 768px) {
     margin: 30px 0px 0px 0px;
+    padding: 0 16px;
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
   }
 
   @media (max-width: 480px) {
-    margin: 20px 0px 0px 0px;
-    gap: 10px;
+    padding: 0 12px;
   }
 `;
 const SearchInputContainer = styled.div`
@@ -471,6 +481,18 @@ const SearchInputContainer = styled.div`
 
   @media (max-width: 480px) {
     max-width: 100%;
+  }
+`;
+
+const SelectsGroup = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+
+  @media (max-width: 768px) {
+    margin-left: 0;
+    width: 100%;
+    flex-direction: column;
   }
 `;
 
@@ -517,6 +539,7 @@ const Laboratory = () => {
 
   const [searchValue, setSearchValue] = useState("");
   const [selectedGroup, setSelectedGroup] = useState("");
+  const [selectedSubject, setSelectedSubject] = useState("");
   const [notification, setNotification] = useState({
     message: "",
     visible: false,
@@ -618,17 +641,19 @@ const Laboratory = () => {
   const handleUpdateStatusLabClick = async (labId, index) => {
     const success = await toggleLab(labId);
     if (success) {
-      setLabItems((prevItems) =>
-        prevItems.map((item) =>
-          item.id === labId
-            ? {
-                ...item,
-                status:
-                  item.status === "published" ? "unpublished" : "published",
-              }
-            : item,
-        ),
-      );
+      setLabItems((prevItems) => {
+        const target = prevItems.find((item) => item.id === labId);
+        if (!target) return prevItems;
+
+        const updated = {
+          ...target,
+          status: target.status === "published" ? "unpublished" : "published",
+          updated_at: new Date().toISOString(),
+        };
+
+        const remaining = prevItems.filter((item) => item.id !== labId);
+        return [updated, ...remaining];
+      });
       setNotification({
         message: "Статус лабораторной работы успешно изменен!",
         visible: true,
@@ -672,10 +697,12 @@ const Laboratory = () => {
   }, []);
 
   useEffect(() => {
-    let filtered = labItems;
+    let filtered = [...labItems]
 
     if (searchValue) {
-      filtered = filtered.filter((lab) => lab.name.includes(searchValue));
+      filtered = filtered.filter((lab) =>
+        lab.name?.toLowerCase().includes(searchValue.toLowerCase())
+      );
     }
 
     if (selectedGroup) {
@@ -684,8 +711,18 @@ const Laboratory = () => {
       );
     }
 
+    if (selectedSubject) {
+      const subject = subjects.find(
+        (s) => Number(s.id) === Number(selectedSubject),
+      );
+      if (subject) {
+        filtered = filtered.filter((lab) => lab.subject === subject.name);
+      }
+    }
+
+    filtered.sort((a, b) => Number(a.id) - Number(b.id));
     setLabItemsToShow(filtered);
-  }, [searchValue, selectedGroup, labItems]);
+  }, [searchValue, selectedGroup, selectedSubject, labItems, subjects]);
 
   const getColors = (index) => {
     return index % 2 === 0
@@ -713,25 +750,40 @@ const Laboratory = () => {
           >
             Добавить новую Лабораторную работу
           </Link>
-          <select
-            name="group_name"
-            className="section__login-formSelect"
-            value={selectedGroup}
-            onChange={(e) => setSelectedGroup(e.target.value)}
-          >
-            <option value="">Все группы</option>
-            {groups.length === 0 ? (
-              <option value="" disabled>
-                Загрузка групп...
-              </option>
-            ) : (
-              groups.map((group) => (
-                <option key={group.id} value={group.id}>
-                  {group.name}
+          <SelectsGroup>
+            <select
+              name="group_name"
+              className="section__login-formSelect"
+              value={selectedGroup}
+              onChange={(e) => setSelectedGroup(e.target.value)}
+            >
+              <option value="">Все группы</option>
+              {groups.length === 0 ? (
+                <option value="" disabled>
+                  Загрузка групп...
                 </option>
-              ))
-            )}
-          </select>
+              ) : (
+                groups.map((group) => (
+                  <option key={group.id} value={group.id}>
+                    {group.name}
+                  </option>
+                ))
+              )}
+            </select>
+            <select
+              name="subject_name"
+              className="section__login-formSelect"
+              value={selectedSubject}
+              onChange={(e) => setSelectedSubject(e.target.value)}
+            >
+              <option value="">Все предметы</option>
+              {subjects.map((subject) => (
+                <option key={subject.id} value={subject.id}>
+                  {subject.name}
+                </option>
+              ))}
+            </select>
+          </SelectsGroup>
         </SearchContainer>
         {labItems.length === 0 ? (
           <TextStyle>Лабораторные работы не найдены</TextStyle>
@@ -752,7 +804,8 @@ const Laboratory = () => {
                   <SpnLab>
                     <Link
                       to={`/checklabteacher/${item.id}`}
-                      className="section__lab-edit" style={{width:"220px"}}
+                      className="section__lab-edit"
+                      style={{ width: "220px" }}
                     >
                       Просмотр результатов
                     </Link>

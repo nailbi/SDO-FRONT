@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 
 const Wrapper = styled.section`
@@ -34,6 +35,27 @@ const Hero = styled.div`
   font-family: "Montserrat", sans-serif;
   max-width: 960px;
   text-align: center;
+
+  .login_link {
+    height: 40px;
+    cursor: pointer;
+    border-radius: 6px;
+    border-style: none;
+    background-color: #C8D5F6;
+    font-size: 15px;
+    color: #252525;
+    font-family: "Montserrat";
+    display: none;
+    text-decoration: none;
+    justify-content: center;
+    align-items: center;
+
+    &:hover {
+      background-color: #DDE5F9;
+      color: #FFF;
+      transition: 0.4s;
+    }
+  }
 
   h1 {
     font-size: 42px;
@@ -73,6 +95,10 @@ const Hero = styled.div`
       font-size: 18px;
       line-height: 26px;
     }
+    
+    .login_link {
+      display: flex;
+    }
   }
 `;
 
@@ -84,6 +110,9 @@ const MainPage = () => (
         Здесь вы сможете проходить и проверять лабораторные работы,
         просматривать результаты и вести историю своего обучения.
       </p>
+      <Link to="/login" class="login_link">
+        Вход/Регистрация
+      </Link>
     </Hero>
   </Wrapper>
 );

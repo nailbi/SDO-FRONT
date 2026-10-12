@@ -1,15 +1,28 @@
 import * as S from '../CheckLabTeacher.styles'
 import { ReactComponent as VectorIcon} from '../../../img/Vector.svg'
 import { useState } from 'react';
+import {dowlandFile} from '../../../api/file-api'
+import { patchMark } from '../../../api/tasks-api';
 
-const StudentLab = ({name, isSubmitted, score}) => {
+const StudentLab = ({name, isSubmitted, score, task_id, stud_id}) => {
 
-    const [checked, setChecked] = useState(false);
     const [isEditingScore, setIsEditingScore] = useState(false)
     const [scoreInput, setScoreInput] = useState('')
+    const [save, setSave] = useState('Сохранить')
 
-    const DowlandFile = () => {
-        console.log('Как будет ручка, сделать запрос')
+    const changeMark = (taskId, userId, newMark) => {
+        const responce = patchMark(taskId, userId, newMark)
+        responce.then((data)=>{
+            console.log(data.data)
+            setSave('Сохранено')
+        }).catch(error => {
+            console.log(error)
+        })
+    }
+
+
+    const DowlandFile = async (task_id, student_id) => {
+        await dowlandFile(task_id, student_id)
     }
 
     const changeEsp = () => {
@@ -38,7 +51,7 @@ const StudentLab = ({name, isSubmitted, score}) => {
             <S.StudentLabAction>
                 <S.StudentsLabtn>Просмотр результатов</S.StudentsLabtn>
                 <S.StudentLabResult $color={score > 75 ? "#21B200" : "#FF7070"}>{score}/100</S.StudentLabResult>
-                <S.StudentLabDowland onClick = {DowlandFile}><VectorIcon/></S.StudentLabDowland>
+                <S.StudentLabDowland onClick = {() => DowlandFile(task_id, stud_id)}><VectorIcon/></S.StudentLabDowland>
                 <S.StudentLabChange>
                     {isEditingScore ? (
                         <S.ScoreEditBox>
@@ -66,17 +79,14 @@ const StudentLab = ({name, isSubmitted, score}) => {
                             {scoreChange()}
                         </span>}
                 </S.StudentLabChange>
-                <S.CheckboxContainer>
-                    <span>{!checked ? 'Сохранить:' : 'Сохранено'}</span>
-                    <S.StyledCheckbox $checked={checked} onClick={() => setChecked((prev) => !prev)}>
-                        <svg viewBox="0 0 24 24">
-                        <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                    </S.StyledCheckbox>
-                    </S.CheckboxContainer>
+                <S.BtnSave onClick = {() => {changeMark(task_id, stud_id, scoreInput)}}>
+                    {save}
+                </S.BtnSave>
             </S.StudentLabAction>) : (<S.StudentLabNo><S.StudentLabChange>Не оценено</S.StudentLabChange></S.StudentLabNo>)
             }
         </S.StudentsLab>
+
+        
     )
 }
 

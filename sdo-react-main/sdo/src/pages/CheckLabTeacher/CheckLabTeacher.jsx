@@ -1,29 +1,38 @@
 import * as S from './CheckLabTeacher.styles'
 import { useParams } from 'react-router-dom';
-import { getTaskById } from '../../api/file-api';
+import { getTaskById, getStudentResultLabId } from '../../api/file-api';
 import React, { useState, useEffect } from 'react';
 import { getGroups } from '../../api/teacher-api';
 import StudentLab from './components/StudentLab';
 
 
 const CheckLabTeacher = () => {
+    const [searchValue, setSearchValue] = useState("");
+    const [groups, setGroups] = useState([]);
+    const [selectedGroup, setSelectedGroup] = useState('')
+    const [selectedSort, setSelectedSort] = useState('')
+    const [studentsData, setStudentData] = useState([])
+    const [task, setTask] = useState('')
+
     const { task_id } = useParams();
     useEffect(() => {
         console.log('Загрузка задачи с ID:', task_id);
         getTaskById(task_id)
           .then((res) => {
-            console.log(res.data);
+            setTask(res.data);
           })
           .catch((error) => {
             console.error('Ошибка загрузки задачи:', error.message);
           });
+        getStudentResultLabId(task_id)
+        .then((res)=>{
+            setStudentData(res.data)
+        }).catch(error => 
+            console.error('Ошибка загрузки задачи:', error.message)
+        )
       }, [task_id]);
 
-    const [searchValue, setSearchValue] = useState("");
-    const [groups, setGroups] = useState([]);
-    const [selectedGroup, setSelectedGroup] = useState('')
-    const [selectedSort, setSelectedSort] = useState('')
-
+    
     const handleSearchChange = (event) => {
         setSearchValue(event.target.value);
     };
@@ -52,54 +61,17 @@ const CheckLabTeacher = () => {
         fetchGroups()
     }, [])
 
-    ///Люди добрые, когда узнаете ручки для этого добра, сделайте их пожалуйста, уберите этот срам.
-    const description = 'Даны три целых числа. Найдите наибольшее из них (программа должна вывести ровно одно целое число). Под наибольшим в этой задаче понимается число, которое не меньше, чем любое другое.'
-    const description_test_vovd = 'Вводится 3 числа'
-    const description_test_vovod = 'Выведете ответ на задачу'
+
+    const task_descript = task?.description?.split(/\\n|\n/)
+    const description = task_descript?.[0] || 'Нет данных'
+    const description_test_vovd = task_descript?.[1]?.match(/\d+/g)?.join(' ') || 'Нет данных'
+    const description_test_vovod = task_descript?.[2]?.match(/\d+/g)?.join(' ') || 'Нет данных'
 
     const sorts = [
             { id: '1', name: 'По фамилии (А-Я)' },
             { id: '2', name: 'По убыванию оценки' },
             { id: '3', name: 'По возрастанию оценки' },
         ]
-
-    const studentsData = [
-  {
-    id: 1,
-    fullName: 'Иванов Иван Сергеевич',
-    group: '211-365',
-    score: 85,
-    isSubmitted: true,
-  },
-  {
-    id: 2,
-    fullName: 'Петров Алексей Владимирович',
-    group: '211-366',
-    score: 45,
-    isSubmitted: true,
-  },
-  {
-    id: 3,
-    fullName: 'Сидорова Анна Дмитриевна',
-    group: '211-365',
-    score: null,
-    isSubmitted: false,
-  },
-  {
-    id: 4,
-    fullName: 'Кузнецов Михаил Андреевич',
-    group: '211-366',
-    score: 100,
-    isSubmitted: true,
-  },
-  {
-    id: 5,
-    fullName: 'Смирнова Елена Игоревна',
-    group: '211-365',
-    score: null,
-    isSubmitted: false,
-  },
-];
     return (
         <S.container>
             <S.Description>
@@ -167,7 +139,7 @@ const CheckLabTeacher = () => {
                     }
                 })
                 .map((student) => {
-                    return <StudentLab key = {student.id} name = {student.fullName} isSubmitted = {student.isSubmitted} score = {student.score} ></StudentLab>
+                    return <StudentLab key = {student.id} name = {student.fullName} isSubmitted = {student.isSubmitted} score = {student.score ?? 0} task_id = {task_id} stud_id = {student.id} ></StudentLab>
                 })}
             </S.StudentList>
         </S.container>

@@ -421,3 +421,4 @@ FodyWeavers.xsd
 MsixContent/
 Manifests/
 node_modules/
+build/

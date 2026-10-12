@@ -201,65 +201,21 @@ export const StudentLabChange = styled.div`
   
 `
 
-export const HiddenCheckbox = styled.input.attrs({ type: 'checkbox' })`
-  border: 0;
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  padding: 0;
-  position: absolute;
-  white-space: nowrap;
-  width: 1px;
-`;
-
-export const StyledCheckbox = styled.div`
-  width: 20px;
-  height: 20px;
-  background-color: #D9D9D9;
-  border: 2px solid #000000;
+export const BtnSave = styled.button`
+  width: 149;
+  height: 39;
+  opacity: 1;
   border-radius: 4px;
-  transition: all 150ms;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  svg {
-    width: 14px;
-    height: 14px;
-    visibility: ${(props) => (props.$checked ? 'visible' : 'hidden')};
-    fill: none;
-    stroke: black;
-    stroke-width: 3px;
-    pointer-events: none;
-  }
-`;
-
-export const CheckboxContainer = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  width: 149px;
-  height: 39px;
-  cursor: default; 
+  border: none;
   background-color: #D9D9D9;
-  border: 0px solid #D9D9D9;
-  border-radius: 4px;
-  padding-left: 10px;
-  box-sizing: border-box;
+  font-family: Montserrat;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 16px;
+  text-align: center;
+  cursor: pointer;
+`
 
-  span {
-    pointer-events: none; 
-    user-select: none;
-    font-family: Montserrat, sans-serif;
-    font-weight: 400;
-    font-size: 16px;
-    line-height: 27px;
-    letter-spacing: 0%;
-    text-align: center;
-  }
-`;
 
 export const StudentLabAction = styled.div`
   display: flex;
@@ -287,3 +243,67 @@ export const ScoreEditBox = styled.div`
     vertical-align: middle;
     }
 `
+
+export const Notification = styled.div`
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 15px;
+  background-color: ${({ success }) => (success ? '#4CAF50' : '#F44336')};
+  color: white;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  font-family: "Montserrat";
+  font-size: 16px;
+  max-width: 300px;
+  z-index: 1000;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: ${({ isExiting }) => (isExiting ? 'fadeOut' : 'fadeIn')} 0.3s ease forwards;
+
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeOut {
+    to {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+  }
+`;
+
+export const ErrorNotification = styled.div`
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  padding: 15px;
+  background-color: #F44336;
+  color: white;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  font-family: "Montserrat";
+  font-size: 14px;
+  max-width: 400px;
+  z-index: 1000;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: ${({ isExiting }) => (isExiting ? 'fadeOut' : 'fadeIn')} 0.3s ease forwards;
+
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeOut {
+    to {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+  }
+`;

@@ -3,8 +3,11 @@ import styled from 'styled-components';
 import { useParams } from 'react-router-dom';
 import FileUploader from './FileUploader';
 import { uploadByTaskId, testingTask, getTaskById } from '../../api/file-api';
+import { deleteSolution } from '../../api/tasks-api';
 
 const Container = styled.div`
+  width: 1280px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -256,6 +259,19 @@ const SolutionTitle = styled.h2`
   margin: 0;
 `;
 
+const SolutionCodeBtn = styled.span`
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 10px solid #333;
+    cursor: pointer;
+
+    transform: rotate(${props => props.$isOpen ? '180deg' : '0deg'});
+    transition: transform 0.2s ease;
+`
+
 const LabaStud = () => {
   const { taskId } = useParams();
   const [task, setTask] = useState(null);
@@ -265,8 +281,9 @@ const LabaStud = () => {
   const [isNotificationExiting, setIsNotificationExiting] = useState(false);
   const [errorNotification, setErrorNotification] = useState(null);
   const [isErrorNotificationExiting, setIsErrorNotificationExiting] = useState(false);
+  const [showSolutionsCode, setShowSolutionsCode] = useState(false)
 
-  useEffect(() => {
+  const loadTask = async () => {
     console.log('Загрузка задачи с ID:', taskId);
     getTaskById(taskId)
       .then((res) => {
@@ -275,6 +292,10 @@ const LabaStud = () => {
       .catch((error) => {
         console.error('Ошибка загрузки задачи:', error.message);
       });
+  }
+
+  useEffect(() => {
+    loadTask()
   }, [taskId]);
 
   const showNotification = (success, message) => {
@@ -353,13 +374,15 @@ const LabaStud = () => {
       });
   };
 
-  const handleDeleteSolution = (index) => {
-    setTask((prevTask) => ({
-      ...prevTask,
-      solutions: prevTask.solutions.filter((_, i) => i !== index),
-    }));
-    showNotification(true, 'Решение успешно удалено!');
-  };
+  const handleDeleteSolution = async (solutionId) => {
+    try {
+        await deleteSolution(solutionId);
+        await loadTask();
+        showNotification(true, 'Решение успешно удалено!');
+    } catch (error) {
+        showErrorNotification(false, error.message);
+    }
+};
 
   if (!task) {
     return <Container>Загрузка...</Container>;
@@ -391,11 +414,12 @@ const LabaStud = () => {
               <SolutionItem key={index}>
                 <SolutionHeader>
                   <SolutionTitle>Решение {index + 1}</SolutionTitle>
-                  <DeleteButton onClick={() => handleDeleteSolution(index)}>
+                  <SolutionCodeBtn $isOpen={showSolutionsCode} onClick = {() => setShowSolutionsCode(!showSolutionsCode)} ></SolutionCodeBtn>
+                  <DeleteButton onClick={() => handleDeleteSolution(solution.id)}>
                     ✕
                   </DeleteButton>
                 </SolutionHeader>
-                <SolutionCode>{solution.code}</SolutionCode>
+                {showSolutionsCode && (<SolutionCode>{solution.code}</SolutionCode>)}
                 <Text><strong>Статус решения:</strong> {solution.status}</Text>
               </SolutionItem>
             ))}
